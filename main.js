@@ -1,66 +1,141 @@
+"use strict";
 /* eslint-disable */
-// store the window's width and height in variables
-let width = window.innerWidth,
-  height = window.innerHeight;
 
-// define the renderer and the scene
-//we set the antialias to true, because we want the edges of objects to be smooth, not jagged.
-//Other options can be set inside the WebGLRenderer()
-let renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(width, height);
-document.body.appendChild(renderer.domElement);
+/**
+ * LIGHTS
+ * CAMERA
+ * ACTION
+ *
+ * Same goes for programming in the Three JS world.
+ * Define a scene.
+ * Define the camera. Set the perspective of the camera.
+ * Define what is to be rendered on to the scene.
+ *
+ * call the render function -- this is the action.
+ */
 
+//define the window width and height
+let height = window.innerHeight,
+  width = window.innerWidth;
+
+//Create a scene
 let scene = new THREE.Scene();
 
-//Adding THREE.Clock which can be sued to acheive the smooth animationof the objects
-var clock = new THREE.Clock();
-
-//Adding the cube
-let cubeGeometry = new THREE.CubeGeometry(100, 100, 100);
-let cubeMaterial = new THREE.MeshLambertMaterial({
-  color: 0x1ec876
-});
-let cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-cube.rotation.y = (Math.PI * 45) / 80;
-
-scene.add(cube);
-
-// Adding the Camera
-let camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 10000);
-camera.position.y = 160;
-camera.position.z = 400;
-
-camera.lookAt(cube.position);
-
-// Addding the camera to the scene and rendering it
-scene.add(camera);
-
-var skyboxGeometry = new THREE.CubeGeometry(10000, 10000, 10000);
+//Create the camera. Here we are using the perspective camera.
 /**
- * Notice the additional argument passed to the material: side: THREE.BackSide.
- * Since the cube will be displayed from the inside, we have to change the side that gets drawn (normally, Three.js draws only outside walls).
+ * PerspectiveCamera accepts four arguments:
+ * Field of View
+ * Aspect
+ * New and
+ * Far
  */
-var skyboxMaterial = new THREE.MeshBasicMaterial({
-  color: 0x000000,
-  side: THREE.BackSide
+let camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+
+//Set the camera position
+camera.position.set(-5, 12, 10);
+camera.lookAt(scene.position);
+
+//INitialize the WebGL renderer
+//Alpha is true removes canvas' bg color
+//antialias gives smooth textures to the edges
+let renderer = new THREE.WebGLRenderer({
+  alpha: true,
+  antialias: true
 });
-var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
+renderer.setPixelRatio(window.devicePixelRatio);
+//make the scene renderer the size of the screen
+renderer.setSize(width, height);
 
-scene.add(skybox);
+/////////////////////////////////////////
+// Trackball Controller
+/////////////////////////////////////////
+let controls = new THREE.TrackballControls(camera);
+controls.rotateSpeed = 5.0;
+controls.zoomSpeed = 3.2;
+controls.panSpeed = 0.8;
+controls.noZoom = false;
+controls.noPan = true;
+controls.staticMoving = false;
+controls.dynamicDampingFactor = 0.2;
 
-var pointLight = new THREE.PointLight(0xffffff);
-pointLight.position.set(0, 320, 200);
+/*
+We start by defining the ColladaLoader using a variable and 
+calling the method along with defining another variable to represent the 3D graphic for referencing at a later point.
+*/
+let dae, // graphic
+  loader = new THREE.ColladaLoader(); // loader
 
-scene.add(pointLight);
+loader.options.convertUpAxis = true;
+//LOad the collada file using URL and pass the loadCollada function
+loader.load(
+  "https://res.cloudinary.com/abhayshiro/raw/upload/v1548757847/learning/model.dae",
+  loadCollada
+);
 
-function render() {
-  renderer.render(scene, camera);
-  //each time you call clock.getDelta it will return the time since the last call, in milliseconds.
-  //This can be used to rotate the cube
-  //It's simply subtracting the time passed from the cube's rotation on the Y axis (remember that it's in radians) to rotate the cube clockwise
-  cube.rotation.y += clock.getDelta();
+var iphone_color = "#FFA500",
+  ambientLight = new THREE.AmbientLight("#EEEEEE"),
+  hemiLight = new THREE.HemisphereLight("#FAFAFA", "#FAFAFA", 0),
+  light = new THREE.PointLight("#FAFAFA", 1, 100);
 
-  requestAnimationFrame(render);
+hemiLight.position.set(0, 50, 0);
+light.position.set(0, 20, 10);
+
+scene.add(ambientLight);
+scene.add(hemiLight);
+scene.add(light);
+
+var axisHelper = new THREE.AxisHelper(1.25);
+scene.add(axisHelper);
+
+/**
+ * @description Collada loader
+ */
+function loadCollada(collada) {
+  dae = collada.scene;
+  dae.position.set(0.4, 0, 0.8);
+  scene.add(dae);
+  renderPhone();
 }
 
-render();
+/**
+ * @description This “render loop” is what will cause the renderer to draw the scene sixty times per second. The following function will make our creation come alive
+ *
+ * With our loader and graphic finally in place there is one last step; we need to create what is called a “render loop”.
+ * This is because we’re not actually rendering anything yet.
+ */
+function renderPhone() {
+  renderer.render(scene, camera);
+}
+
+//event listeners
+
+/////////////////////////////////////////
+// Window Resizing
+/////////////////////////////////////////
+window.addEventListener(
+  "resize",
+  function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    controls.handleResize();
+    renderPhone();
+  },
+  false
+);
+
+// Render the scene when the controls have changed.
+// If you don’t have other animations or changes in your scene,
+// you won’t be draining system resources every frame to render a scene.
+controls.addEventListener("change", renderPhone);
+
+// Avoid constantly rendering the scene by only
+// updating the controls every requestAnimationFrame
+function animationLoop() {
+  requestAnimationFrame(animationLoop);
+  controls.update();
+}
+
+animationLoop();
+//append the renderer to the body
+document.body.appendChild(renderer.domElement);
