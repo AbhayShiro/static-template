@@ -6,7 +6,7 @@ let width = window.innerWidth,
   pixelRatio = window.devicePixelRatio,
   aspectRatio = width / height,
   scene = new THREE.Scene(),
-  light = new THREE.PointLight(0xffffff),
+  light = new THREE.SpotLight(0xffffff),
   camera = new THREE.PerspectiveCamera(70, aspectRatio, 1, 1000),
   renderer = new THREE.WebGLRenderer({
     alpha: true,
@@ -29,7 +29,14 @@ let width = window.innerWidth,
   };
 
 camera.position.z = 50;
-light.position.set(0, 320, 200);
+light.position.set(20, 320, 200);
+light.castShadow = true;
+light.shadow.mapSize.width = width;
+light.shadow.mapSize.height = height;
+
+light.shadow.camera.near = 500;
+light.shadow.camera.far = 4000;
+light.shadow.camera.fov = 30;
 renderer.setSize(width, height);
 
 scene.add(light);
