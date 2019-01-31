@@ -13,13 +13,13 @@ let width = window.innerWidth,
     antialias: true
   }),
   texture = new THREE.TextureLoader().load(
-    "https://res.cloudinary.com/abhayshiro/image/upload/v1548927086/learning/textures/TexturesCom_MetalFloorsRusted0039_2_S.jpg"
+    "https://res.cloudinary.com/abhayshiro/image/upload/v1548928399/learning/textures/2k_earth_daymap.jpg"
   ),
-  cylinderGeometry = new THREE.BoxGeometry(30, 30, 8),
-  cylinderMaterial = new THREE.MeshLambertMaterial({
+  earthGeometry = new THREE.SphereGeometry(5, 32, 32),
+  earthMaterial = new THREE.MeshBasicMaterial({
     map: texture
   }),
-  cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial),
+  earth = new THREE.Mesh(earthGeometry, earthMaterial),
   //Skybox pattern
   skyboxGeometry = new THREE.BoxGeometry(10000, 10000, 10000),
   skyboxMaterial = new THREE.MeshBasicMaterial({
@@ -44,7 +44,7 @@ renderer.setSize(width, height);
 
 scene.add(light);
 scene.add(skybox);
-scene.add(cylinder);
+scene.add(earth);
 
 /////////////////////////////////////////
 // Trackball Controller
@@ -73,6 +73,8 @@ window.addEventListener(
   false
 );
 
+document.body.appendChild(renderer.domElement);
+
 // Render the scene when the controls have changed.
 // If you don’t have other animations or changes in your scene,
 // you won’t be draining system resources every frame to render a scene.
@@ -87,4 +89,26 @@ function animationLoop() {
 render();
 animationLoop();
 
-document.body.appendChild(renderer.domElement);
+// dat gui
+var gui = new dat.GUI();
+var cameraGui = gui.addFolder("camera position");
+cameraGui.add(camera.position, "x");
+cameraGui.add(camera.position, "y");
+cameraGui.add(camera.position, "z");
+cameraGui.open();
+
+var cameraGui = gui.addFolder("camera projection");
+cameraGui.add(camera, "fov");
+cameraGui.open();
+
+var lightGui = gui.addFolder("light position");
+lightGui.add(light.position, "x");
+lightGui.add(light.position, "y");
+lightGui.add(light.position, "z");
+lightGui.open();
+
+var cubeGui = gui.addFolder("Earth position");
+cubeGui.add(earth.position, "x");
+cubeGui.add(earth.position, "y");
+cubeGui.add(earth.position, "z");
+cubeGui.open();
